@@ -115,7 +115,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		        int8_t c = 0;
 
 			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_ACCEL_XYZ, 0},
-					&accel_fit, 1, &accel_data);
+					&accel_fit, 8, &accel_data);
 
 			for (int k = 0; k < c; k++) {
 			    printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
@@ -125,7 +125,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			i += c;
 
 			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_GYRO_XYZ, 0},
-					&gyro_fit, 1, &gyro_data);
+					&gyro_fit, 8, &gyro_data);
 
 			for (int k = 0; k < c; k++) {
 			    printk("GY data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
@@ -136,7 +136,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 
 			c = decoder->decode(buf,
 					(struct sensor_chan_spec) {SENSOR_CHAN_DIE_TEMP, 0},
-					&temp_fit, 1, &temp_data);
+					&temp_fit, 4, &temp_data);
 
 			for (int k = 0; k < c; k++) {
 			    printk("TP data for %s %lluns %s%d.%d °C \n", dev->name,
