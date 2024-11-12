@@ -117,43 +117,32 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_ACCEL_XYZ, 0},
 					&accel_fit, 1, &accel_data);
 
-			if (c > 0) {
-			    printk("Accel data for %s (%" PRIq(6) ", %" PRIq(6)
-					", %" PRIq(6) ") %lluns (%d)\n", dev->name,
-			    PRIq_arg(accel_data.readings[0].x, 6, accel_data.shift),
-			    PRIq_arg(accel_data.readings[0].y, 6, accel_data.shift),
-			    PRIq_arg(accel_data.readings[0].z, 6, accel_data.shift),
-			    (accel_data.header.base_timestamp_ns
-			    + accel_data.readings[0].timestamp_delta), accel_fit);
-
-			i += c;
+			for (int k = 0; k < c; k++) {
+			    printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+					", %" PRIq(6) ") \n", dev->name,
+			    PRIsensor_three_axis_data_arg(accel_data, k));
 			}
+			i += c;
 
 			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_GYRO_XYZ, 0},
 					&gyro_fit, 1, &gyro_data);
 
-			if (c > 0) {
-			    printk("Gyro data for %s (%" PRIq(6) ", %" PRIq(6)
-					", %" PRIq(6) ") %lluns (%d)\n", dev->name,
-			    PRIq_arg(gyro_data.readings[0].x, 6, gyro_data.shift),
-			    PRIq_arg(gyro_data.readings[0].y, 6, gyro_data.shift),
-			    PRIq_arg(gyro_data.readings[0].z, 6, gyro_data.shift),
-			    (gyro_data.header.base_timestamp_ns
-			    + gyro_data.readings[0].timestamp_delta), gyro_fit);
-
-			i += c;
+			for (int k = 0; k < c; k++) {
+			    printk("GY data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+					", %" PRIq(6) ") \n", dev->name,
+			    PRIsensor_three_axis_data_arg(gyro_data, k));
 			}
+			i += c;
 
 			c = decoder->decode(buf,
 					(struct sensor_chan_spec) {SENSOR_CHAN_DIE_TEMP, 0},
 					&temp_fit, 1, &temp_data);
-			if (c > 0) {
-			    printk("Temp data for %s %s%d.%d °C %lluns (%d)\n", dev->name,
-				PRIq_arg(temp_data.readings[0].temperature, 2, temp_data.shift),
-				(temp_data.header.base_timestamp_ns
-				+ temp_data.readings[0].timestamp_delta), temp_fit);
-			i += c;
+
+			for (int k = 0; k < c; k++) {
+			    printk("TP data for %s %lluns %s%d.%d °C \n", dev->name,
+				PRIsensor_q31_data_arg(temp_data, k));
 			}
+			i += c;
 
 		}
 
