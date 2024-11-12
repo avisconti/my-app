@@ -46,9 +46,12 @@ RTIO_DEFINE_WITH_MEMPOOL(accel_ctx, NUM_SENSORS, NUM_SENSORS, NUM_SENSORS*20, 25
 static int print_accels_stream(const struct device *dev, struct rtio_iodev *iodev)
 {
 	int rc = 0;
-	struct sensor_three_axis_data accel_data = {0};
-	struct sensor_three_axis_data gyro_data = {0};
-	struct sensor_q31_data temp_data = {0};
+	uint8_t accel_buf[128] = {0};
+	struct sensor_three_axis_data *accel_data = (struct sensor_three_axis_data *)accel_buf;
+	uint8_t gyro_buf[128] = {0};
+	struct sensor_three_axis_data *gyro_data = (struct sensor_three_axis_data *)gyro_buf;
+	uint8_t temp_buf[64] = {0};
+	struct sensor_q31_data *temp_data = (struct sensor_q31_data *)temp_buf;
 	const struct sensor_decoder_api *decoder;
 	struct rtio_cqe *cqe;
 	uint8_t *buf;
@@ -115,32 +118,32 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		        int8_t c = 0;
 
 			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_ACCEL_XYZ, 0},
-					&accel_fit, 8, &accel_data);
+					&accel_fit, 8, accel_data);
 
 			for (int k = 0; k < c; k++) {
 			    printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
 					", %" PRIq(6) ") \n", dev->name,
-			    PRIsensor_three_axis_data_arg(accel_data, k));
+			    PRIsensor_three_axis_data_arg(*accel_data, k));
 			}
 			i += c;
 
 			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_GYRO_XYZ, 0},
-					&gyro_fit, 8, &gyro_data);
+					&gyro_fit, 8, gyro_data);
 
 			for (int k = 0; k < c; k++) {
 			    printk("GY data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
 					", %" PRIq(6) ") \n", dev->name,
-			    PRIsensor_three_axis_data_arg(gyro_data, k));
+			    PRIsensor_three_axis_data_arg(*gyro_data, k));
 			}
 			i += c;
 
 			c = decoder->decode(buf,
 					(struct sensor_chan_spec) {SENSOR_CHAN_DIE_TEMP, 0},
-					&temp_fit, 4, &temp_data);
+					&temp_fit, 4, temp_data);
 
 			for (int k = 0; k < c; k++) {
 			    printk("TP data for %s %lluns %s%d.%d °C \n", dev->name,
-				PRIsensor_q31_data_arg(temp_data, k));
+				PRIsensor_q31_data_arg(*temp_data, k));
 			}
 			i += c;
 
