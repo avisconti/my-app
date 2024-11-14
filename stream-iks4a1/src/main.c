@@ -14,32 +14,30 @@
 #include <zephyr/rtio/rtio.h>
 #include <zephyr/drivers/sensor.h>
 
-#define ACCEL_ALIAS(i) DT_ALIAS(_CONCAT(accel, i))
-#define ACCELEROMETER_DEVICE(i, _)                                                           \
-	IF_ENABLED(DT_NODE_EXISTS(ACCEL_ALIAS(i)), (DEVICE_DT_GET(ACCEL_ALIAS(i)),))
+#define STREAMDEV_ALIAS(i) DT_ALIAS(_CONCAT(stream, i))
+#define STREAMDEV_DEVICE(i, _)                                                           \
+	IF_ENABLED(DT_NODE_EXISTS(STREAMDEV_ALIAS(i)), (DEVICE_DT_GET(STREAMDEV_ALIAS(i)),))
 #define NUM_SENSORS 1
 
 /* support up to 10 accelerometer sensors */
-static const struct device *const sensors[] = {LISTIFY(10, ACCELEROMETER_DEVICE, ())};
+static const struct device *const sensors[] = {LISTIFY(10, STREAMDEV_DEVICE, ())};
 
-#ifdef CONFIG_SENSOR_ASYNC_API
+#define STREAM_IODEV_SYM(id) CONCAT(accel_iodev, id)
+#define STREAM_IODEV_PTR(id, _) &STREAM_IODEV_SYM(id)
 
-#define ACCEL_IODEV_SYM(id) CONCAT(accel_iodev, id)
-#define ACCEL_IODEV_PTR(id, _) &ACCEL_IODEV_SYM(id)
-
-#define ACCEL_TRIGGERS                                   \
+#define STREAM_TRIGGERS                                   \
 	{SENSOR_TRIG_FIFO_FULL, SENSOR_STREAM_DATA_NOP}, \
 	{SENSOR_TRIG_FIFO_WATERMARK, SENSOR_STREAM_DATA_INCLUDE}
 
-#define ACCEL_DEFINE_IODEV(id, _)         \
+#define STREAM_DEFINE_IODEV(id, _)         \
 	SENSOR_DT_STREAM_IODEV(               \
-		ACCEL_IODEV_SYM(id),              \
-		ACCEL_ALIAS(id),                  \
-		ACCEL_TRIGGERS);
+		STREAM_IODEV_SYM(id),              \
+		STREAMDEV_ALIAS(id),                  \
+		STREAM_TRIGGERS);
 
-LISTIFY(NUM_SENSORS, ACCEL_DEFINE_IODEV, (;));
+LISTIFY(NUM_SENSORS, STREAM_DEFINE_IODEV, (;));
 
-struct rtio_iodev *iodevs[NUM_SENSORS] = { LISTIFY(NUM_SENSORS, ACCEL_IODEV_PTR, (,)) };
+struct rtio_iodev *iodevs[NUM_SENSORS] = { LISTIFY(NUM_SENSORS, STREAM_IODEV_PTR, (,)) };
 
 RTIO_DEFINE_WITH_MEMPOOL(accel_ctx, NUM_SENSORS, NUM_SENSORS, NUM_SENSORS*20, 256, sizeof(void *));
 
@@ -117,6 +115,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		while (i < frame_count) {
 		        int8_t c = 0;
 
+			/* decode and print Accelerometer samples */
 			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_ACCEL_XYZ, 0},
 					&accel_fit, 8, accel_data);
 
@@ -127,6 +126,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			}
 			i += c;
 
+			/* decode and print Gyroscope samples */
 			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_GYRO_XYZ, 0},
 					&gyro_fit, 8, gyro_data);
 
@@ -137,6 +137,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			}
 			i += c;
 
+			/* decode and print Temperature samples */
 			c = decoder->decode(buf,
 					(struct sensor_chan_spec) {SENSOR_CHAN_DIE_TEMP, 0},
 					&temp_fit, 4, temp_data);
@@ -154,40 +155,6 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 
 	return rc;
 }
-#else
-
-static const enum sensor_channel channels[] = {
-	SENSOR_CHAN_ACCEL_X,
-	SENSOR_CHAN_ACCEL_Y,
-	SENSOR_CHAN_ACCEL_Z,
-};
-
-static int print_accels(const struct device *dev)
-{
-	int ret;
-	struct sensor_value accel[3];
-
-	ret = sensor_sample_fetch(dev);
-	if (ret < 0) {
-		printk("%s: sensor_sample_fetch() failed: %d\n", dev->name, ret);
-		return ret;
-	}
-
-	for (size_t i = 0; i < ARRAY_SIZE(channels); i++) {
-		ret = sensor_channel_get(dev, channels[i], &accel[i]);
-		if (ret < 0) {
-			printk("%s: sensor_channel_get(%c) failed: %d\n", dev->name, 'X' + i, ret);
-			return ret;
-		}
-	}
-
-	printk("%16s [m/s^2]:    (%12.6f, %12.6f, %12.6f)\n", dev->name,
-	       sensor_value_to_double(&accel[0]), sensor_value_to_double(&accel[1]),
-	       sensor_value_to_double(&accel[2]));
-
-	return 0;
-}
-#endif /*CONFIG_SENSOR_ASYNC_API*/
 
 static int set_sampling_freq(const struct device *dev)
 {
@@ -224,17 +191,10 @@ int main(void)
 		set_sampling_freq(sensors[i]);
 	}
 
-#ifndef CONFIG_COVERAGE
 	while (1) {
-#else
-	for (int i = 0; i < 5; i++) {
-#endif
 		for (size_t i = 0; i < ARRAY_SIZE(sensors); i++) {
-#ifdef CONFIG_SENSOR_ASYNC_API
 			ret = print_accels_stream(sensors[i], iodevs[i]);
-#else
-			ret = print_accels(sensors[i]);
-#endif /*CONFIG_SENSOR_ASYNC_API*/
+
 			if (ret < 0) {
 				return 0;
 			}

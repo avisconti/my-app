@@ -15,7 +15,7 @@
 
 / {
 	aliases {
-		accel0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
+		stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
 	};
 };
 
