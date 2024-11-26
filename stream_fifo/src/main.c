@@ -19,7 +19,7 @@
 	IF_ENABLED(DT_NODE_EXISTS(STREAMDEV_ALIAS(i)), (DEVICE_DT_GET(STREAMDEV_ALIAS(i)),))
 #define NUM_SENSORS 1
 
-/* support up to 10 accelerometer sensors */
+/* support up to 10 sensors */
 static const struct device *const sensors[] = {LISTIFY(10, STREAMDEV_DEVICE, ())};
 
 #define STREAM_IODEV_SYM(id) CONCAT(accel_iodev, id)
@@ -93,7 +93,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		uint32_t temp_fit = 0;
 
 
-		/* Number of accelerometer data frames */
+		/* Number of sensor data frames */
 		uint16_t frame_count;
 
 		rc = decoder->get_frame_count(buf,
@@ -109,14 +109,15 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			printk("Tap! Sensor %s\n", dev->name);
 		}
 
-		/* Decode all available accelerometer sample frames */
+		/* Decode all available sensor FIFO frames */
 		printk("FIFO count - %d\n", frame_count);
 		int i = 0;
 		while (i < frame_count) {
 		        int8_t c = 0;
 
-			/* decode and print Accelerometer samples */
-			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_ACCEL_XYZ, 0},
+			/* decode and print Accelerometer FIFO frames */
+			c = decoder->decode(buf,
+				(struct sensor_chan_spec) {SENSOR_CHAN_ACCEL_XYZ, 0},
 					&accel_fit, 8, accel_data);
 
 			for (int k = 0; k < c; k++) {
@@ -126,8 +127,9 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			}
 			i += c;
 
-			/* decode and print Gyroscope samples */
-			c = decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_GYRO_XYZ, 0},
+			/* decode and print Gyroscope FIFO frames */
+			c = decoder->decode(buf,
+				(struct sensor_chan_spec) {SENSOR_CHAN_GYRO_XYZ, 0},
 					&gyro_fit, 8, gyro_data);
 
 			for (int k = 0; k < c; k++) {
@@ -137,7 +139,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			}
 			i += c;
 
-			/* decode and print Temperature samples */
+			/* decode and print Temperature FIFO frames */
 			c = decoder->decode(buf,
 					(struct sensor_chan_spec) {SENSOR_CHAN_DIE_TEMP, 0},
 					&temp_fit, 4, temp_data);
