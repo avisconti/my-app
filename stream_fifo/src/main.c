@@ -94,15 +94,21 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 
 
 		/* Number of sensor data frames */
-		uint16_t frame_count;
+		uint16_t xl_count, gy_count, tp_count, frame_count;
 
 		rc = decoder->get_frame_count(buf,
-					      (struct sensor_chan_spec) { SENSOR_CHAN_ACCEL_XYZ, 0 }, &frame_count);
+					      (struct sensor_chan_spec) { SENSOR_CHAN_ACCEL_XYZ, 0 }, &xl_count);
+		rc += decoder->get_frame_count(buf,
+					      (struct sensor_chan_spec) { SENSOR_CHAN_GYRO_XYZ, 0 }, &gy_count);
+		rc += decoder->get_frame_count(buf,
+					      (struct sensor_chan_spec) { SENSOR_CHAN_DIE_TEMP, 0 }, &tp_count);
 
 		if (rc != 0) {
-			printk("sensor_get_decoder failed %d\n", rc);
+			printk("sensor_get_frame failed %d\n", rc);
 			return rc;
 		}
+
+		frame_count = xl_count + gy_count + tp_count;
 
 		/* If a tap has occurred lets print it out */
 		if (decoder->has_trigger(buf, SENSOR_TRIG_TAP)) {
