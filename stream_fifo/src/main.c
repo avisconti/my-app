@@ -41,6 +41,11 @@ struct rtio_iodev *iodevs[NUM_SENSORS] = { LISTIFY(NUM_SENSORS, STREAM_IODEV_PTR
 
 RTIO_DEFINE_WITH_MEMPOOL(accel_ctx, NUM_SENSORS, NUM_SENSORS, NUM_SENSORS * 20, 256, sizeof(void *));
 
+struct sensor_chan_spec accel_chan = { SENSOR_CHAN_ACCEL_XYZ, 0 };
+struct sensor_chan_spec gyro_chan = { SENSOR_CHAN_GYRO_XYZ, 0 };
+struct sensor_chan_spec temp_chan = { SENSOR_CHAN_DIE_TEMP, 0 };
+struct sensor_chan_spec rot_vector_chan = { SENSOR_CHAN_QUAT_XYZW, 0 };
+
 static uint8_t accel_buf[128] = { 0 };
 static uint8_t gyro_buf[128] = { 0 };
 static uint8_t temp_buf[64] = { 0 };
@@ -100,8 +105,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		/* Number of sensor data frames */
 		uint16_t xl_count, gy_count, tp_count, sflp_count, frame_count;
 
-		rc = decoder->get_frame_count(buf,
-					      (struct sensor_chan_spec) { SENSOR_CHAN_ACCEL_XYZ, 0 }, &xl_count);
+		rc = decoder->get_frame_count(buf, accel_chan, &xl_count);
 		rc += decoder->get_frame_count(buf,
 					      (struct sensor_chan_spec) { SENSOR_CHAN_GYRO_XYZ, 0 }, &gy_count);
 		rc += decoder->get_frame_count(buf,
@@ -128,9 +132,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			int8_t c = 0;
 
 			/* decode and print Accelerometer FIFO frames */
-			c = decoder->decode(buf,
-					    (struct sensor_chan_spec) { SENSOR_CHAN_ACCEL_XYZ, 0 },
-					    &accel_fit, 8, accel_data);
+			c = decoder->decode(buf, accel_chan, &accel_fit, 8, accel_data);
 
 			for (int k = 0; k < c; k++) {
 				printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
