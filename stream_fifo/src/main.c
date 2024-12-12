@@ -41,20 +41,23 @@ struct rtio_iodev *iodevs[NUM_SENSORS] = { LISTIFY(NUM_SENSORS, STREAM_IODEV_PTR
 
 RTIO_DEFINE_WITH_MEMPOOL(accel_ctx, NUM_SENSORS, NUM_SENSORS, NUM_SENSORS * 20, 256, sizeof(void *));
 
+static uint8_t accel_buf[128] = { 0 };
+static uint8_t gyro_buf[128] = { 0 };
+static uint8_t temp_buf[64] = { 0 };
+static uint8_t quat_buf[128] = { 0 };
+
 static int print_accels_stream(const struct device *dev, struct rtio_iodev *iodev)
 {
 	int rc = 0;
-	uint8_t accel_buf[128] = { 0 };
-	struct sensor_three_axis_data *accel_data = (struct sensor_three_axis_data *)accel_buf;
-	uint8_t gyro_buf[128] = { 0 };
-	struct sensor_three_axis_data *gyro_data = (struct sensor_three_axis_data *)gyro_buf;
-	uint8_t temp_buf[64] = { 0 };
-	struct sensor_q31_data *temp_data = (struct sensor_q31_data *)temp_buf;
 	const struct sensor_decoder_api *decoder;
 	struct rtio_cqe *cqe;
 	uint8_t *buf;
 	uint32_t buf_len;
 	struct rtio_sqe *handles[NUM_SENSORS];
+	struct sensor_three_axis_data *accel_data = (struct sensor_three_axis_data *)accel_buf;
+	struct sensor_three_axis_data *gyro_data = (struct sensor_three_axis_data *)gyro_buf;
+	struct sensor_q31_data *temp_data = (struct sensor_q31_data *)temp_buf;
+	struct sensor_quaternion_data *quat_data = (struct sensor_quaternion_data *)quat_buf;
 
 	/* Start the streams */
 	for (int i = 0; i < NUM_SENSORS; i++) {
@@ -91,10 +94,11 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		/* Frame iterator values when data comes from a FIFO */
 		uint32_t accel_fit = 0, gyro_fit = 0;
 		uint32_t temp_fit = 0;
+		uint32_t quat_fit = 0;
 
 
 		/* Number of sensor data frames */
-		uint16_t xl_count, gy_count, tp_count, frame_count;
+		uint16_t xl_count, gy_count, tp_count, sflp_count, frame_count;
 
 		rc = decoder->get_frame_count(buf,
 					      (struct sensor_chan_spec) { SENSOR_CHAN_ACCEL_XYZ, 0 }, &xl_count);
@@ -102,13 +106,15 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 					      (struct sensor_chan_spec) { SENSOR_CHAN_GYRO_XYZ, 0 }, &gy_count);
 		rc += decoder->get_frame_count(buf,
 					      (struct sensor_chan_spec) { SENSOR_CHAN_DIE_TEMP, 0 }, &tp_count);
+		rc += decoder->get_frame_count(buf,
+					      (struct sensor_chan_spec) { SENSOR_CHAN_QUAT_XYZW, 0 }, &sflp_count);
 
 		if (rc != 0) {
 			printk("sensor_get_frame failed %d\n", rc);
 			return rc;
 		}
 
-		frame_count = xl_count + gy_count + tp_count;
+		frame_count = xl_count + gy_count + tp_count + sflp_count;
 
 		/* If a tap has occurred lets print it out */
 		if (decoder->has_trigger(buf, SENSOR_TRIG_TAP)) {
@@ -156,6 +162,17 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			}
 			i += c;
 
+			/* decode and print Gyroscope FIFO frames */
+			c = decoder->decode(buf,
+					    (struct sensor_chan_spec) { SENSOR_CHAN_QUAT_XYZW, 0 },
+					    &quat_fit, 8, quat_data);
+
+			for (int k = 0; k < c; k++) {
+				printk("%d QT data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+				       ", %" PRIq(6) ", %" PRIq(6) ") \n", (*quat_data).shift, dev->name,
+				       PRIsensor_quaternion_data_arg(*quat_data, k));
+			}
+			i += c;
 		}
 
 		rtio_release_buffer(&accel_ctx, buf, buf_len);
