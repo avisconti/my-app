@@ -106,12 +106,9 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		uint16_t xl_count, gy_count, tp_count, sflp_count, frame_count;
 
 		rc = decoder->get_frame_count(buf, accel_chan, &xl_count);
-		rc += decoder->get_frame_count(buf,
-					      (struct sensor_chan_spec) { SENSOR_CHAN_GYRO_XYZ, 0 }, &gy_count);
-		rc += decoder->get_frame_count(buf,
-					      (struct sensor_chan_spec) { SENSOR_CHAN_DIE_TEMP, 0 }, &tp_count);
-		rc += decoder->get_frame_count(buf,
-					      (struct sensor_chan_spec) { SENSOR_CHAN_QUAT_XYZW, 0 }, &sflp_count);
+		rc += decoder->get_frame_count(buf, gyro_chan, &gy_count);
+		rc += decoder->get_frame_count(buf, temp_chan, &tp_count);
+		rc += decoder->get_frame_count(buf, rot_vector_chan, &sflp_count);
 
 		if (rc != 0) {
 			printk("sensor_get_frame failed %d\n", rc);
@@ -142,9 +139,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			i += c;
 
 			/* decode and print Gyroscope FIFO frames */
-			c = decoder->decode(buf,
-					    (struct sensor_chan_spec) { SENSOR_CHAN_GYRO_XYZ, 0 },
-					    &gyro_fit, 8, gyro_data);
+			c = decoder->decode(buf, gyro_chan, &gyro_fit, 8, gyro_data);
 
 			for (int k = 0; k < c; k++) {
 				printk("GY data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
@@ -154,9 +149,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			i += c;
 
 			/* decode and print Temperature FIFO frames */
-			c = decoder->decode(buf,
-					    (struct sensor_chan_spec) { SENSOR_CHAN_DIE_TEMP, 0 },
-					    &temp_fit, 4, temp_data);
+			c = decoder->decode(buf, temp_chan, &temp_fit, 4, temp_data);
 
 			for (int k = 0; k < c; k++) {
 				printk("TP data for %s %lluns %s%d.%d °C \n", dev->name,
@@ -164,14 +157,12 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			}
 			i += c;
 
-			/* decode and print Gyroscope FIFO frames */
-			c = decoder->decode(buf,
-					    (struct sensor_chan_spec) { SENSOR_CHAN_QUAT_XYZW, 0 },
-					    &quat_fit, 8, quat_data);
+			/* decode and print Game Rotation Vector FIFO frames */
+			c = decoder->decode(buf, rot_vector_chan, &quat_fit, 8, quat_data);
 
 			for (int k = 0; k < c; k++) {
-				printk("%d QT data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
-				       ", %" PRIq(6) ", %" PRIq(6) ") \n", (*quat_data).shift, dev->name,
+				printk("ROT data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+				       ", %" PRIq(6) ", %" PRIq(6) ") \n", dev->name,
 				       PRIsensor_quaternion_data_arg(*quat_data, k));
 			}
 			i += c;
