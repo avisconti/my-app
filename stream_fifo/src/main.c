@@ -44,12 +44,14 @@ RTIO_DEFINE_WITH_MEMPOOL(accel_ctx, NUM_SENSORS, NUM_SENSORS, NUM_SENSORS * 20, 
 struct sensor_chan_spec accel_chan = { SENSOR_CHAN_ACCEL_XYZ, 0 };
 struct sensor_chan_spec gyro_chan = { SENSOR_CHAN_GYRO_XYZ, 0 };
 struct sensor_chan_spec temp_chan = { SENSOR_CHAN_DIE_TEMP, 0 };
-struct sensor_chan_spec rot_vector_chan = { SENSOR_CHAN_QUAT_XYZW, 0 };
+struct sensor_chan_spec rot_vector_chan = { SENSOR_CHAN_GAME_ROTATION_VECTOR, 0 };
+struct sensor_chan_spec gravity_chan = { SENSOR_CHAN_GRAVITY_VECTOR, 0 };
 
 static uint8_t accel_buf[128] = { 0 };
 static uint8_t gyro_buf[128] = { 0 };
 static uint8_t temp_buf[64] = { 0 };
-static uint8_t quat_buf[128] = { 0 };
+static uint8_t rot_vect_buf[128] = { 0 };
+static uint8_t gravity_buf[128] = { 0 };
 
 static int print_accels_stream(const struct device *dev, struct rtio_iodev *iodev)
 {
@@ -62,7 +64,8 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 	struct sensor_three_axis_data *accel_data = (struct sensor_three_axis_data *)accel_buf;
 	struct sensor_three_axis_data *gyro_data = (struct sensor_three_axis_data *)gyro_buf;
 	struct sensor_q31_data *temp_data = (struct sensor_q31_data *)temp_buf;
-	struct sensor_quaternion_data *quat_data = (struct sensor_quaternion_data *)quat_buf;
+	struct sensor_game_rotation_vector_data *rot_vect_data = (struct sensor_game_rotation_vector_data *)rot_vect_buf;
+	struct sensor_gravity_vector_data *gravity_data = (struct sensor_gravity_vector_data *)gravity_buf;
 
 	/* Start the streams */
 	for (int i = 0; i < NUM_SENSORS; i++) {
@@ -99,23 +102,24 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		/* Frame iterator values when data comes from a FIFO */
 		uint32_t accel_fit = 0, gyro_fit = 0;
 		uint32_t temp_fit = 0;
-		uint32_t quat_fit = 0;
-
+		uint32_t rot_vect_fit = 0, gravity_fit = 0;
 
 		/* Number of sensor data frames */
-		uint16_t xl_count, gy_count, tp_count, sflp_count, frame_count;
+		uint16_t xl_count, gy_count, tp_count;
+		uint16_t rot_vect_count, gravity_count, frame_count;
 
 		rc = decoder->get_frame_count(buf, accel_chan, &xl_count);
 		rc += decoder->get_frame_count(buf, gyro_chan, &gy_count);
 		rc += decoder->get_frame_count(buf, temp_chan, &tp_count);
-		rc += decoder->get_frame_count(buf, rot_vector_chan, &sflp_count);
+		rc += decoder->get_frame_count(buf, rot_vector_chan, &rot_vect_count);
+		rc += decoder->get_frame_count(buf, gravity_chan, &gravity_count);
 
 		if (rc != 0) {
 			printk("sensor_get_frame failed %d\n", rc);
 			return rc;
 		}
 
-		frame_count = xl_count + gy_count + tp_count + sflp_count;
+		frame_count = xl_count + gy_count + tp_count + rot_vect_count + gravity_count;
 
 		/* If a tap has occurred lets print it out */
 		if (decoder->has_trigger(buf, SENSOR_TRIG_TAP)) {
@@ -158,12 +162,22 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			i += c;
 
 			/* decode and print Game Rotation Vector FIFO frames */
-			c = decoder->decode(buf, rot_vector_chan, &quat_fit, 8, quat_data);
+			c = decoder->decode(buf, rot_vector_chan, &rot_vect_fit, 8, rot_vect_data);
 
 			for (int k = 0; k < c; k++) {
 				printk("ROT data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
 				       ", %" PRIq(6) ", %" PRIq(6) ") \n", dev->name,
-				       PRIsensor_quaternion_data_arg(*quat_data, k));
+				       PRIsensor_game_rotation_vector_data_arg(*rot_vect_data, k));
+			}
+			i += c;
+
+			/* decode and print Gravity Vector FIFO frames */
+			c = decoder->decode(buf, gravity_chan, &gravity_fit, 8, gravity_data);
+
+			for (int k = 0; k < c; k++) {
+				printk("GV data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+				       ", %" PRIq(6) ") \n", dev->name,
+				       PRIsensor_gravity_vector_data_arg(*gravity_data, k));
 			}
 			i += c;
 		}
