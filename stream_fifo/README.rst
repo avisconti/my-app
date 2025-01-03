@@ -8,7 +8,16 @@
 Overview
 ********
 
-This sample application demonstrates how to use 3-Axis accelerometers.
+This sample application demonstrates how to stream FIFO data using the `RTIO framework`_.
+
+The streaming is started using the sensor_stream() API and it is self-sustained by the
+SENSOR_TRIG_FIFO_WATERMARK trigger.
+
+Currently the sample gets/prints data for the following sensor channels:
+
+        - SENSOR_CHAN_ACCEL_XYZ
+        - SENSOR_CHAN_GYRO_XYZ
+        - SENSOR_CHAN_DIE_TEMP
 
 Building and Running
 ********************
@@ -19,16 +28,35 @@ to be aliased as ``streamN`` where ``N`` goes from ``0`` to ``9``. For example:
 .. code-block:: devicetree
 
   / {
-  	aliases {
-   			stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
-  		};
-  	};
+      aliases {
+                   stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
+              };
+      };
 
-Make sure the aliases are in devicetree, then build and run with:
+Example devicetree overlays and configurations are already available for nucleo_f401re and
+nucleo_h503rb in the boards directory:
+
+- :zephyr_file:`samples/sensor/stream_fifo/boards/nucleo_f401re.overlay`
+
+  DT overlay file for the nucleo_f401re board.
+
+- :zephyr_file:`samples/sensor/stream_fifo/boards/nucleo_f401re.conf`
+
+  Configuration file for the nucleo_f401re board.
+
+- :zephyr_file:`samples/sensor/stream_fifo/boards/nucleo_h503rb.overlay`
+
+  DT overlay file for the nucleo_h503rb board.
+
+- :zephyr_file:`samples/sensor/stream_fifo/boards/nucleo_h503rb.conf`
+
+  Configuration file for the nucleo_h503rb board.
+
+For example, build and run sample for nucleo_h503rb with:
 
 .. zephyr-app-commands::
-   :zephyr-app: samples/sensor/accel_polling
-   :board: <board to use>
+   :zephyr-app: samples/sensor/stream_fifo
+   :board: nucleo_h503rb
    :goals: build flash
    :compact:
 
@@ -36,7 +64,8 @@ Sample Output
 =============
 
 The following example output is for a lsm6dsv16x IMU device with accelerometer, gyroscope
-and temperature sensors.
+and temperature sensors. The FIFO watermark is set to 64. The board used is a nucleo_h503rb
+equipped with a `x-nucleo-iks4a1`_ shield.
 
 .. code-block:: console
 
@@ -106,3 +135,14 @@ and temperature sensors.
        GY data for lsm6dsv16x@6b 708854166667ns (0.015249, 0.003049, 0.039954)
        GY data for lsm6dsv16x@6b 708887500000ns (0.025924, 0.071674, -0.101869)
        TP data for lsm6dsv16x@6b 708887500000ns 24.457031 °C
+
+References
+==========
+
+.. target-notes::
+
+.. _RTIO framework:
+   https://docs.zephyrproject.org/latest/services/rtio/index.html
+
+.. _x-nucleo-iks4a1:
+   http://www.st.com/en/ecosystems/x-nucleo-iks4a1.html
