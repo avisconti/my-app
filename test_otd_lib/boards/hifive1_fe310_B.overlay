@@ -1,0 +1,25 @@
+#include <zephyr/dt-bindings/sensor/lsm6dsv16x.h>
+
+/*
+ * RS232 usart
+ */
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	clock-frequency = <16000000>;
+};
+
+&spi1 {
+	lis2dux12_0: lis2dux12@0 {
+		compatible = "st,lis2dux12";
+
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(5)>;
+		int1-gpios =  <&arduino_header 8 GPIO_ACTIVE_HIGH>; /* D2 */
+		#int1-gpios =  <&arduino_header 5 GPIO_ACTIVE_HIGH>; /* A5 */
+		int2-gpios =  <&arduino_header 9 GPIO_ACTIVE_HIGH>; /* thru USER_INT on D2 */
+		drdy-pin = <1>;
+	};
+};
+

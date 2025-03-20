@@ -1,0 +1,5 @@
+config PRINT_ACCEL_DATA
+	bool "Print Accel data"
+	default n
+
+source "Kconfig.zephyr"
