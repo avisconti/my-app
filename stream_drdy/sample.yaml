@@ -1,7 +1,7 @@
 sample:
-  name: Stream FIFO sample
+  name: Stream sample on Data Ready trigger
 tests:
-  sample.sensor.stream_fifo:
+  sample.sensor.stream_drdy:
     harness: console
     tags: sensors
     filter: dt_alias_exists("stream0")

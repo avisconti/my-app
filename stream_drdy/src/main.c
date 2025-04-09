@@ -42,11 +42,6 @@ RTIO_DEFINE_WITH_MEMPOOL(stream_ctx, NUM_SENSORS, NUM_SENSORS,
 			 NUM_SENSORS * 20, 256, sizeof(void *));
 
 struct sensor_chan_spec accel_chan = { SENSOR_CHAN_ACCEL_XYZ, 0 };
-struct sensor_chan_spec gyro_chan = { SENSOR_CHAN_GYRO_XYZ, 0 };
-struct sensor_chan_spec temp_chan = { SENSOR_CHAN_DIE_TEMP, 0 };
-struct sensor_chan_spec rot_vector_chan = { SENSOR_CHAN_GAME_ROTATION_VECTOR, 0 };
-struct sensor_chan_spec gravity_chan = { SENSOR_CHAN_GRAVITY_VECTOR, 0 };
-struct sensor_chan_spec gbias_chan = { SENSOR_CHAN_GBIAS_XYZ, 0 };
 
 static uint8_t accel_buf[128] = { 0 };
 static uint32_t tot_frame_count = 0;
@@ -93,7 +88,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			return rc;
 		}
 
-		/* Frame iterator values when data comes from a FIFO */
+		/* Frame iterator values */
 		uint32_t accel_fit = 0;
 
 		/* Number of sensor data frames */
@@ -117,24 +112,12 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 
 		int8_t c = 0;
 
-		/* decode and print Accelerometer FIFO frames */
+		/* decode and print Accelerometer frames */
 		c = decoder->decode(buf, accel_chan, &accel_fit, 1, accel_data);
 
-		//if (tot_frame_count % 100 == 99) {
-
-			//printf("count: %d\n", tot_frame_count);
-
-			#if 1
-			printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
-			       ", %" PRIq(6) ")\n", dev->name,
-			       PRIsensor_three_axis_data_arg(*accel_data, 0));
-			//for (int k = 0; k < c; k++) {
-				//printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
-				       //", %" PRIq(6) ")\n", dev->name,
-				       //PRIsensor_three_axis_data_arg(*accel_data, k));
-			//}
-			#endif
-		//}
+		printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+		       ", %" PRIq(6) ")\n", dev->name,
+		       PRIsensor_three_axis_data_arg(*accel_data, 0));
 
 		rtio_release_buffer(&stream_ctx, buf, buf_len);
 	}
@@ -152,13 +135,6 @@ static int check_sensor_is_off(const struct device *dev)
 	/* Check if accel is off */
 	if (ret != 0 || (odr.val1 == 0 && odr.val2 == 0)) {
 		printk("%s WRN : accelerometer device is off\n", dev->name);
-	}
-
-	ret = sensor_attr_get(dev, SENSOR_CHAN_GYRO_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &odr);
-
-	/* Check if gyro is off */
-	if (ret != 0 || (odr.val1 == 0 && odr.val2 == 0)) {
-		printk("%s WRN : gyroscope device is off\n", dev->name);
 	}
 
 	return 0;
