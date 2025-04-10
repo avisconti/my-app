@@ -1,0 +1,32 @@
+/*
+ * Copyright (c) 2024 STMicroelectronics
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include <zephyr/dt-bindings/sensor/lis2dux12.h>
+
+
+/*
+ * Nucleo F401RE board + shield iks4a1
+ *
+ * This devicetree overlay file will be automatically picked by the Zephyr
+ * build system when building the sample for the nucleo_f401re board.
+ */
+
+/ {
+	aliases {
+		accel0 = &lis2duxs12_1e_x_nucleo_iks4a1;
+	};
+};
+
+&arduino_i2c {
+	lis2duxs12_1e_x_nucleo_iks4a1: lis2duxs12@19 {
+		compatible = "st,lis2duxs12";
+		reg = <0x19>;
+		power-mode = <LIS2DUX12_OPER_MODE_HIGH_RESOLUTION>;
+		odr = <LIS2DUX12_DT_ODR_400Hz>;
+		range = <LIS2DUX12_DT_FS_16G>;
+
+		int1-gpios =  <&arduino_header 3 GPIO_ACTIVE_HIGH>; /* A3 */
+	};
+};
