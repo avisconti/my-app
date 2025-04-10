@@ -29,7 +29,8 @@ static const struct device *const sensors[] = {LISTIFY(10, ACCELEROMETER_DEVICE,
 	SENSOR_DT_READ_IODEV(               \
 		ACCEL_IODEV_SYM(id),              \
 		ACCEL_ALIAS(id),                  \
-		{SENSOR_CHAN_ACCEL_XYZ, 0});
+		{SENSOR_CHAN_ACCEL_XYZ, 0}, \
+		{SENSOR_CHAN_DIE_TEMP, 0});
 
 LISTIFY(NUM_SENSORS, ACCEL_DEFINE_IODEV, (;));
 
@@ -80,6 +81,15 @@ int main(void)
 			printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
 			       ", %" PRIq(6) ")\n", dev->name,
 			       PRIsensor_three_axis_data_arg(accel_data, 0));
+
+			uint32_t temp_fit = 0;
+			struct sensor_q31_data temp_data = {0};
+
+			decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_DIE_TEMP, 0},
+				&temp_fit, 1, &temp_data);
+
+			printk("TP data for %s temp is %s%d.%d °C \n", dev->name,
+				PRIq_arg(temp_data.readings[0].temperature, 2, temp_data.shift));
 		}
 		k_msleep(500);
 	}
