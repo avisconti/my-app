@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <zephyr/dt-bindings/sensor/lis2dux12.h>
+#include <zephyr/dt-bindings/sensor/lsm6dsv16x.h>
+#include <zephyr/dt-bindings/sensor/lsm6dsv320x.h>
 
 
 /*
@@ -15,11 +17,13 @@
 
 / {
 	aliases {
-		accel0 = &lis2duxs12_1e_x_nucleo_iks4a1;
+		//accel0 = &lis2duxs12_1e_x_nucleo_iks4a1;
+		accel0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
 	};
 };
 
 &arduino_i2c {
+#if 0
 	lis2duxs12_1e_x_nucleo_iks4a1: lis2duxs12@19 {
 		compatible = "st,lis2duxs12";
 		reg = <0x19>;
@@ -29,4 +33,32 @@
 
 		int1-gpios =  <&arduino_header 3 GPIO_ACTIVE_HIGH>; /* A3 */
 	};
+#endif
+
+#if 0
+	lsm6dsv16x_6b_x_nucleo_iks4a1: lsm6dsv16x@6b {
+		compatible = "st,lsm6dsv16x";
+		reg = <0x6b>;
+		accel-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
+		accel-range = <LSM6DSV16X_DT_FS_16G>;
+		gyro-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
+		gyro-range = <LSM6DSV16X_DT_FS_500DPS>;
+
+		int2-gpios =  <&arduino_header 10 GPIO_ACTIVE_HIGH>; /* D4 (PB5) */
+		drdy-pin = <2>;
+		drdy-pulsed;
+	};
+#endif
+
+#if 0
+	lsm6dsv16x_6b_x_nucleo_iks4a1: lsm6dsv320xx@6a {
+		compatible = "st,lsm6dsv320x";
+		reg = <0x6a>;
+		accel-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
+		#accel-hg-odr = <LSM6DSV320X_HG_XL_ODR_AT_480Hz>;
+		accel-range = <LSM6DSV320X_DT_FS_16G>;
+		gyro-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
+		gyro-range = <LSM6DSV320X_DT_FS_500DPS>;
+	};
+#endif
 };
