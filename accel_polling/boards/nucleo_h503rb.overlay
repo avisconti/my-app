@@ -6,6 +6,7 @@
 #include <zephyr/dt-bindings/sensor/lis2dux12.h>
 #include <zephyr/dt-bindings/sensor/lsm6dsv16x.h>
 #include <zephyr/dt-bindings/sensor/lsm6dsv320x.h>
+#include <zephyr/dt-bindings/sensor/iis3dwb.h>
 
 
 /*
@@ -18,10 +19,12 @@
 / {
 	aliases {
 		//accel0 = &lis2duxs12_1e_x_nucleo_iks4a1;
+		//accel0 = &iis3dwb_0;
 		accel0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
 	};
 };
 
+#if 1
 &arduino_i2c {
 #if 0
 	lis2duxs12_1e_x_nucleo_iks4a1: lis2duxs12@19 {
@@ -62,3 +65,20 @@
 	};
 #endif
 };
+#endif
+
+#if 0
+&spi1 {
+	iis3dwb_0: iis3dwb@0 {
+		compatible = "st,iis3dwb";
+
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+
+		range = <IIS3DWB_DT_FS_16G>;
+		odr = <IIS3DWB_DT_ODR_26k7Hz>;
+		filter = <IIS3DWB_DT_LP_ODR_DIV_4>;
+		int1-gpios =  <&arduino_header 5 GPIO_ACTIVE_HIGH>; /* A5 (PC0) */
+	};
+};
+#endif

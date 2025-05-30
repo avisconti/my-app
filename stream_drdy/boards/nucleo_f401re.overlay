@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <zephyr/dt-bindings/sensor/lsm6dsv16x.h>
+#include <zephyr/dt-bindings/sensor/lis2dux12.h>
 
 
 /*
@@ -15,10 +16,12 @@
 
 / {
 	aliases {
-		stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
+		//stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
+		stream0 = &lis2dux12_0;
 	};
 };
 
+#if 0
 &arduino_i2c {
 	lsm6dsv16x_6b_x_nucleo_iks4a1: lsm6dsv16x@6b {
 		compatible = "st,lsm6dsv16x";
@@ -28,5 +31,21 @@
 		int2-gpios =  <&arduino_header 10 GPIO_ACTIVE_HIGH>; /* D4 (PB5) */
 		drdy-pin = <2>;
 		drdy-pulsed;
+	};
+};
+#endif
+
+&spi1 {
+	lis2dux12_0: lis2dux12@0 {
+		compatible = "st,lis2dux12";
+
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(20)>;
+
+		power-mode = <LIS2DUX12_OPER_MODE_HIGH_RESOLUTION>;
+		odr = <LIS2DUX12_DT_ODR_100Hz>;
+		range = <LIS2DUX12_DT_FS_16G>;
+
+		int1-gpios =  <&arduino_header 5 GPIO_ACTIVE_HIGH>; /* A5 (PC0) */
 	};
 };

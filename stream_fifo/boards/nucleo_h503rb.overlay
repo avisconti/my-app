@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 #include <zephyr/dt-bindings/sensor/lsm6dsv16x.h>
+//#include <zephyr/dt-bindings/sensor/iis3dwb.h>
 
 
 /*
@@ -16,9 +17,11 @@
 / {
 	aliases {
 		stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
+		//stream0 = &iis3dwb_0;
 	};
 };
 
+#if 1
 &arduino_i2c {
 	lsm6dsv16x_6b_x_nucleo_iks4a1: lsm6dsv16x@6b {
 		compatible = "st,lsm6dsv16x";
@@ -39,3 +42,30 @@
 		drdy-pulsed;
 	};
 };
+#endif
+
+#if 0
+&spi1 {
+	iis3dwb_0: iis3dwb@0 {
+		compatible = "st,iis3dwb";
+
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+
+		range = <IIS3DWB_DT_FS_2G>;
+		odr = <IIS3DWB_DT_ODR_26k7Hz>;
+		filter = <IIS3DWB_DT_LP_ODR_DIV_4>;
+		//wakeup-duration = <IIS3DWB_DT_ODR_0>;
+		//wakeup-ths-weight = <IIS3DWB_DT_LSB_FS_DIV_64>;
+		//wakeup-threshold = <2>;
+		int1-gpios =  <&arduino_header 5 GPIO_ACTIVE_HIGH>; /* A5 (PC0) */
+		drdy-pin = <1>;
+		drdy-pulsed;
+
+		fifo-watermark = <400>;
+		accel-fifo-batch-rate = <IIS3DWB_DT_XL_BATCHED_AT_26k7Hz>;
+		temp-fifo-batch-rate = <IIS3DWB_DT_TEMP_BATCHED_AT_104Hz>;
+		timestamp-fifo-batch-rate = <IIS3DWB_DT_TS_NOT_BATCHED>;
+	};
+};
+#endif

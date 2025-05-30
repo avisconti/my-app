@@ -45,6 +45,7 @@ struct sensor_chan_spec accel_chan = { SENSOR_CHAN_ACCEL_XYZ, 0 };
 
 static uint8_t accel_buf[128] = { 0 };
 static uint32_t tot_frame_count = 0;
+static int peppe = 0;
 
 static int print_accels_stream(const struct device *dev, struct rtio_iodev *iodev)
 {
@@ -88,6 +89,12 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			return rc;
 		}
 
+		#if 0
+		if (decoder->has_trigger(buf, SENSOR_TRIG_DATA_READY)) {
+			printk("DRDY! Sensor %s\n", dev->name);
+		}
+		#endif
+
 		/* Frame iterator values */
 		uint32_t accel_fit = 0;
 
@@ -115,9 +122,13 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		/* decode and print Accelerometer frames */
 		c = decoder->decode(buf, accel_chan, &accel_fit, 1, accel_data);
 
-		printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
-		       ", %" PRIq(6) ")\n", dev->name,
-		       PRIsensor_three_axis_data_arg(*accel_data, 0));
+		//printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+		       //", %" PRIq(6) ")\n", dev->name,
+		       //PRIsensor_three_axis_data_arg(*accel_data, 0));
+
+
+		if ((peppe++ % 200) == 3)
+			printk("-- %d\n", peppe);
 
 		rtio_release_buffer(&stream_ctx, buf, buf_len);
 	}
