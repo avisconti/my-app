@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) 2024 STMicroelectronics
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/sensor/lps2xdf.h>
+
+/*
+ * Nucleo F401RE board + shield iks4a1
+ *
+ * This devicetree overlay file will be automatically picked by the Zephyr
+ * build system when building the sample for the nucleo_f401re board.
+ */
+
+/ {
+	aliases {
+		pression = &lps27dewo;
+	};
+};
+
+#if 0
+&arduino_i2c {
+#if 1
+	lps27dewo: lps27dewo@5c {
+		compatible = "st,lps27dewo";
+		reg = <0x5c>;
+		status = "okay";
+	};
+#endif
+
+};
+#endif
+
+&spi1 {
+	lps27dewo: lps27dewo@0 {
+		compatible = "st,lps27dewo";
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+		fs = <LPS27DEWO_DT_FS_MODE_2_6060>;
+		status = "okay";
+	};
+};
