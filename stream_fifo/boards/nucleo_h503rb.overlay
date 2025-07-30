@@ -3,8 +3,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <zephyr/dt-bindings/sensor/lsm6dsv16x.h>
-//#include <zephyr/dt-bindings/sensor/iis3dwb.h>
+//#include <zephyr/dt-bindings/sensor/lsm6dsv16x.h>
+//#include <zephyr/dt-bindings/sensor/lsm6dsv320x.h>
+#include <zephyr/dt-bindings/sensor/iis3dwb.h>
 
 
 /*
@@ -16,12 +17,13 @@
 
 / {
 	aliases {
-		stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
-		//stream0 = &iis3dwb_0;
+		//stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
+		stream0 = &iis3dwb_0;
+		//stream0 = &lsm6dsv320x;
 	};
 };
 
-#if 1
+#if 0
 &arduino_i2c {
 	lsm6dsv16x_6b_x_nucleo_iks4a1: lsm6dsv16x@6b {
 		compatible = "st,lsm6dsv16x";
@@ -44,8 +46,9 @@
 };
 #endif
 
-#if 0
+#if 1
 &spi1 {
+#if 1
 	iis3dwb_0: iis3dwb@0 {
 		compatible = "st,iis3dwb";
 
@@ -62,10 +65,36 @@
 		drdy-pin = <1>;
 		drdy-pulsed;
 
-		fifo-watermark = <400>;
+		fifo-watermark = <500>;
 		accel-fifo-batch-rate = <IIS3DWB_DT_XL_BATCHED_AT_26k7Hz>;
 		temp-fifo-batch-rate = <IIS3DWB_DT_TEMP_BATCHED_AT_104Hz>;
 		timestamp-fifo-batch-rate = <IIS3DWB_DT_TS_NOT_BATCHED>;
 	};
+#endif
+#if 0
+	lsm6dsv320x: lsm6dsv320x@0 {
+		compatible = "st,lsm6dsv320x";
+
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+
+		accel-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
+		accel-range = <LSM6DSV320X_DT_FS_16G>;
+		gyro-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
+		gyro-range = <LSM6DSV320X_DT_FS_500DPS>;
+
+		fifo-watermark = <64>;
+		accel-fifo-batch-rate = <LSM6DSVXXX_DT_XL_BATCHED_AT_15Hz>;
+		gyro-fifo-batch-rate = <LSM6DSVXXX_DT_GY_BATCHED_AT_15Hz>;
+		temp-fifo-batch-rate = <LSM6DSVXXX_DT_TEMP_BATCHED_AT_15Hz>;
+
+		sflp-odr = <LSM6DSVXXX_DT_SFLP_ODR_AT_15Hz>;
+		sflp-fifo-enable = <LSM6DSVXXX_DT_SFLP_FIFO_GAME_ROTATION_GRAVITY_GBIAS>;
+
+		int1-gpios =  <&arduino_header 5 GPIO_ACTIVE_HIGH>; /* A5 (PC0) */
+		drdy-pin = <1>;
+		drdy-pulsed;
+	};
+#endif
 };
 #endif

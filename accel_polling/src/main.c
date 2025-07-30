@@ -88,8 +88,8 @@ int main(void)
 			decoder->decode(buf, (struct sensor_chan_spec) {SENSOR_CHAN_DIE_TEMP, 0},
 				&temp_fit, 1, &temp_data);
 
-			//printk("TP data for %s temp is %s%d.%d °C \n", dev->name,
-				//PRIq_arg(temp_data.readings[0].temperature, 2, temp_data.shift));
+			printk("TP data for %s temp is %s%d.%d °C \n", dev->name,
+				PRIq_arg(temp_data.readings[0].temperature, 2, temp_data.shift));
 		}
 		k_msleep(500);
 	}

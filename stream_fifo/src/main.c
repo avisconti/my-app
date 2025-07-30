@@ -50,13 +50,16 @@ struct sensor_chan_spec rot_vector_chan = { SENSOR_CHAN_GAME_ROTATION_VECTOR, 0 
 struct sensor_chan_spec gravity_chan = { SENSOR_CHAN_GRAVITY_VECTOR, 0 };
 struct sensor_chan_spec gbias_chan = { SENSOR_CHAN_GBIAS_XYZ, 0 };
 
-static uint8_t accel_buf[128] = { 0 };
-static uint8_t gyro_buf[128] = { 0 };
+static uint8_t accel_buf[512] = { 0 };
+//static uint8_t gyro_buf[128] = { 0 };
 static uint8_t temp_buf[64] = { 0 };
-static uint8_t rot_vect_buf[128] = { 0 };
-static uint8_t gravity_buf[128] = { 0 };
-static uint8_t gbias_buf[128] = { 0 };
+//static uint8_t rot_vect_buf[128] = { 0 };
+//static uint8_t gravity_buf[128] = { 0 };
+//static uint8_t gbias_buf[128] = { 0 };
 static uint16_t wakeup_trig = 0;
+
+static uint32_t tot_frm_cnt = 0;
+static uint32_t tot_loop = 0;
 
 static int print_accels_stream(const struct device *dev, struct rtio_iodev *iodev)
 {
@@ -67,11 +70,11 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 	uint32_t buf_len;
 	struct rtio_sqe *handles[NUM_SENSORS];
 	struct sensor_three_axis_data *accel_data = (struct sensor_three_axis_data *)accel_buf;
-	struct sensor_three_axis_data *gyro_data = (struct sensor_three_axis_data *)gyro_buf;
+	//struct sensor_three_axis_data *gyro_data = (struct sensor_three_axis_data *)gyro_buf;
 	struct sensor_q31_data *temp_data = (struct sensor_q31_data *)temp_buf;
-	struct sensor_game_rotation_vector_data *rot_vect_data = (struct sensor_game_rotation_vector_data *)rot_vect_buf;
-	struct sensor_three_axis_data *gravity_data = (struct sensor_three_axis_data *)gravity_buf;
-	struct sensor_three_axis_data *gbias_data = (struct sensor_three_axis_data *)gbias_buf;
+	//struct sensor_game_rotation_vector_data *rot_vect_data = (struct sensor_game_rotation_vector_data *)rot_vect_buf;
+	//struct sensor_three_axis_data *gravity_data = (struct sensor_three_axis_data *)gravity_buf;
+	//struct sensor_three_axis_data *gbias_data = (struct sensor_three_axis_data *)gbias_buf;
 
 	/* Start the streams */
 	for (int i = 0; i < NUM_SENSORS; i++) {
@@ -117,11 +120,11 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		uint16_t rot_vect_count = 0, gravity_count = 0, gbias_count = 0, frame_count;
 
 		rc = decoder->get_frame_count(buf, accel_chan, &xl_count);
-		rc += decoder->get_frame_count(buf, gyro_chan, &gy_count);
+		//rc += decoder->get_frame_count(buf, gyro_chan, &gy_count);
 		rc += decoder->get_frame_count(buf, temp_chan, &tp_count);
-		rc += decoder->get_frame_count(buf, rot_vector_chan, &rot_vect_count);
-		rc += decoder->get_frame_count(buf, gravity_chan, &gravity_count);
-		rc += decoder->get_frame_count(buf, gbias_chan, &gbias_count);
+		//rc += decoder->get_frame_count(buf, rot_vector_chan, &rot_vect_count);
+		//rc += decoder->get_frame_count(buf, gravity_chan, &gravity_count);
+		//rc += decoder->get_frame_count(buf, gbias_chan, &gbias_count);
 
 		if (rc != 0) {
 			printk("sensor_get_frame failed %d\n", rc);
@@ -132,13 +135,17 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 		frame_count += rot_vect_count + gravity_count + gbias_count;
 
 		/* If a tap has occurred lets print it out */
+		#if 0
 		if (decoder->has_trigger(buf, SENSOR_TRIG_MOTION)) {
 			//printk("Motion trigger: wakeup occurred %s\n", dev->name);
 			wakeup_trig++;
 		}
+		#endif
 
 		/* Decode all available sensor FIFO frames */
-		printk("FIFO count - %d (wkup %d)\n", frame_count, wakeup_trig);
+		tot_frm_cnt += frame_count;
+		if ((tot_loop++ % 200) == 199)
+			printk("FIFO count - %d (%d %d)\n", frame_count, tot_loop, tot_frm_cnt);
 
 		int i = 0;
 
@@ -149,23 +156,11 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			c = decoder->decode(buf, accel_chan, &accel_fit, 8, accel_data);
 
 			for (int k = 0; k < c; k++) {
-				printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
-				      ", %" PRIq(6) ")\n", dev->name,
-				       PRIsensor_three_axis_data_arg(*accel_data, k));
+				//printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+				      //", %" PRIq(6) ")\n", dev->name,
+				       //PRIsensor_three_axis_data_arg(*accel_data, k));
 			}
 			i += c;
-
-			#if 0
-			/* decode and print Gyroscope FIFO frames */
-			c = decoder->decode(buf, gyro_chan, &gyro_fit, 8, gyro_data);
-
-			for (int k = 0; k < c; k++) {
-				printk("GY data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
-				       ", %" PRIq(6) ")\n", dev->name,
-				       PRIsensor_three_axis_data_arg(*gyro_data, k));
-			}
-			i += c;
-			#endif
 
 			/* decode and print Temperature FIFO frames */
 			c = decoder->decode(buf, temp_chan, &temp_fit, 4, temp_data);
@@ -177,6 +172,16 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			i += c;
 
 			#if 0
+			/* decode and print Gyroscope FIFO frames */
+			c = decoder->decode(buf, gyro_chan, &gyro_fit, 8, gyro_data);
+
+			for (int k = 0; k < c; k++) {
+				//printk("GY data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+				       //", %" PRIq(6) ")\n", dev->name,
+				       //PRIsensor_three_axis_data_arg(*gyro_data, k));
+			}
+			i += c;
+
 			/* decode and print Game Rotation Vector FIFO frames */
 			c = decoder->decode(buf, rot_vector_chan, &rot_vect_fit, 8, rot_vect_data);
 

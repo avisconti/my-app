@@ -13,7 +13,7 @@
 
 / {
 	aliases {
-		stream0 = &lsm6dsv16x_0;
+		accel0 = &lsm6dsv16x_0;
 	};
 };
 
