@@ -5,7 +5,8 @@
  */
 //#include <zephyr/dt-bindings/sensor/lsm6dsv16x.h>
 //#include <zephyr/dt-bindings/sensor/lsm6dsv320x.h>
-#include <zephyr/dt-bindings/sensor/iis3dwb.h>
+//#include <zephyr/dt-bindings/sensor/iis3dwb.h>
+#include <zephyr/dt-bindings/sensor/iis3dwb10is.h>
 
 
 /*
@@ -18,7 +19,8 @@
 / {
 	aliases {
 		//stream0 = &lsm6dsv16x_6b_x_nucleo_iks4a1;
-		stream0 = &iis3dwb_0;
+		//stream0 = &iis3dwb_0;
+		stream0 = &iis3dwb10is_0;
 		//stream0 = &lsm6dsv320x;
 	};
 };
@@ -48,7 +50,7 @@
 
 #if 1
 &spi1 {
-#if 1
+#if 0
 	iis3dwb_0: iis3dwb@0 {
 		compatible = "st,iis3dwb";
 
@@ -69,6 +71,30 @@
 		accel-fifo-batch-rate = <IIS3DWB_DT_XL_BATCHED_AT_26k7Hz>;
 		temp-fifo-batch-rate = <IIS3DWB_DT_TEMP_BATCHED_AT_104Hz>;
 		timestamp-fifo-batch-rate = <IIS3DWB_DT_TS_NOT_BATCHED>;
+	};
+#endif
+#if 1
+	iis3dwb10is_0: iis3dwb10is@0 {
+		compatible = "st,iis3dwb10is";
+
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+
+		range = <IIS3DWB10IS_DT_FS_200g>;
+		odr = <IIS3DWB10IS_DT_ODR_20KHz>;
+		filter = <IIS3DWB10IS_DT_LPF1_BW_20KHz>;
+		//wakeup-duration = <IIS3DWB_DT_ODR_0>;
+		//wakeup-ths-weight = <IIS3DWB_DT_LSB_FS_DIV_64>;
+		//wakeup-threshold = <2>;
+		int1-gpios =  <&arduino_header 5 GPIO_ACTIVE_HIGH>; /* A5 (PC0) */
+		int2-gpios =  <&arduino_header 8 GPIO_ACTIVE_HIGH>; /* D2 (PA10) */
+		drdy-pin = <1>;
+		drdy-pulsed;
+
+		fifo-watermark = <500>;
+		accel-fifo-batch = <1>;
+		temp-fifo-batch = <1>;
+		timestamp-fifo-batch-rate = <IIS3DWB10IS_DT_TS_NOT_BATCHED>;
 	};
 #endif
 #if 0

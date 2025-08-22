@@ -50,9 +50,9 @@ struct sensor_chan_spec rot_vector_chan = { SENSOR_CHAN_GAME_ROTATION_VECTOR, 0 
 struct sensor_chan_spec gravity_chan = { SENSOR_CHAN_GRAVITY_VECTOR, 0 };
 struct sensor_chan_spec gbias_chan = { SENSOR_CHAN_GBIAS_XYZ, 0 };
 
-static uint8_t accel_buf[512] = { 0 };
+static uint8_t accel_buf[4096] = { 0 };
 //static uint8_t gyro_buf[128] = { 0 };
-static uint8_t temp_buf[64] = { 0 };
+static uint8_t temp_buf[128] = { 0 };
 //static uint8_t rot_vect_buf[128] = { 0 };
 //static uint8_t gravity_buf[128] = { 0 };
 //static uint8_t gbias_buf[128] = { 0 };
@@ -144,7 +144,7 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 
 		/* Decode all available sensor FIFO frames */
 		tot_frm_cnt += frame_count;
-		if ((tot_loop++ % 200) == 199)
+		if ((tot_loop++ % 400) == 399)
 			printk("FIFO count - %d (%d %d)\n", frame_count, tot_loop, tot_frm_cnt);
 
 		int i = 0;
@@ -156,6 +156,17 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 			c = decoder->decode(buf, accel_chan, &accel_fit, 8, accel_data);
 
 			for (int k = 0; k < c; k++) {
+			    //printk("--> %lluns\n", accel_data->header.base_timestamp_ns + accel_data->readings[k].timestamp_delta);
+			    //static uint64_t peppo, diffo;
+
+			    //diffo = accel_data->header.base_timestamp_ns + accel_data->readings[k].timestamp_delta -peppo;
+			    //if (diffo != 50000)
+				//printk("--> %lluns\n", diffo);
+			    //peppo = accel_data->header.base_timestamp_ns + accel_data->readings[k].timestamp_delta;
+
+				//if (accel_data->readings[k].timestamp_delta != 50000)
+					//printk("puttana %d\n", accel_data->readings[k].timestamp_delta);
+
 				//printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
 				      //", %" PRIq(6) ")\n", dev->name,
 				       //PRIsensor_three_axis_data_arg(*accel_data, k));

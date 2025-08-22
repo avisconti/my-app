@@ -119,10 +119,13 @@ static int print_accels_stream(const struct device *dev, struct rtio_iodev *iode
 
 		int8_t c = 0;
 
+		static uint32_t tot_sample = 0;
+
 		/* decode and print Accelerometer frames */
 		c = decoder->decode(buf, accel_chan, &accel_fit, 1, accel_data);
 
-		printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
+		if ((tot_sample++ % 1000) == 999)
+			printk("XL data for %s %lluns (%" PRIq(6) ", %" PRIq(6)
 		       ", %" PRIq(6) ")\n", dev->name,
 		       PRIsensor_three_axis_data_arg(*accel_data, 0));
 
