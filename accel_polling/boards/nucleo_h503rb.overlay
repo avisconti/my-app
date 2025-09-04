@@ -15,14 +15,29 @@
 
 / {
 	aliases {
-		accel0 = &lsm6dsv320x_spi;
+		//accel0 = &lsm6dsv320x_spi;
+		accel0 = &lsm6dsv320x_iks5a1;
 	};
 };
 
 &arduino_i2c {
+	#if 1
+	lsm6dsv320x_iks5a1: lsm6dsv320x@6a {
+		compatible = "st,lsm6dsv320x";
+
+		reg = <0x6a>;
+
+		accel-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
+		#accel-hg-odr = <LSM6DSV320X_HG_XL_ODR_AT_480Hz>;
+		accel-range = <LSM6DSV320X_DT_FS_16G>;
+		gyro-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
+		gyro-range = <LSM6DSV320X_DT_FS_500DPS>;
+	};
+	#endif
 };
 
 &spi1 {
+	#if 0
 	lsm6dsv320x_spi: lsm6dsv320x@0 {
 		compatible = "st,lsm6dsv320x";
 
@@ -35,4 +50,5 @@
 		gyro-odr = <LSM6DSVXXX_DT_ODR_AT_480Hz>;
 		gyro-range = <LSM6DSV320X_DT_FS_500DPS>;
 	};
+	#endif
 };
